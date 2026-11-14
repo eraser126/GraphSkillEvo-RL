@@ -16,15 +16,17 @@ def validate_rows(tasks, rows, phase):
         raise RuntimeError('Incomplete worker panel; no fabricated zero rewards')
     expected={t['id'] for t in tasks}; found=set()
     for row in rows:
-        fields(row, {'id','score','trace','tokens','calls','error'}, {'id','score'})
+        fields(row, {'id','score','official_accuracy','outcome','trace','tokens','calls','error'}, {'id','score'})
         if row['id'] not in expected or row['id'] in found: raise RuntimeError('Worker task ID mismatch')
         found.add(row['id'])
         if row.get('error'): raise RuntimeError('Worker infrastructure failure')
         if not isinstance(row['score'],(float,int)) or not math.isfinite(row['score']) or not 0<=row['score']<=1:
-            raise RuntimeError('Invalid official score')
+            raise RuntimeError('Invalid worker score')
+        if 'official_accuracy' in row and row['official_accuracy'] not in (0, 1):
+            raise RuntimeError('Invalid binary official accuracy')
         if phase=='support':
             trace=Trace.create(row['trace'])
-            if trace.public()['task_id']!=row['id'] or trace.public()['success']!=(row['score']==1):
+            if trace.public()['task_id']!=row['id'] or trace.public()['success']!=(row.get('official_accuracy', row['score'])==1):
                 raise ContractError('Trace/outcome mismatch')
     return rows
 

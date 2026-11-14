@@ -80,14 +80,20 @@ class LocalLLMEditor:
         if tokenizer.pad_token_id is None: raise ValueError('Tokenizer requires a pad or EOS token')
         return cls(model,tokenizer,max_new_tokens,max_context)
 
+    def _prompt_ids(self,messages):
+        if getattr(self.tokenizer,'chat_template',None):
+            return self.tokenizer.apply_chat_template(messages,tokenize=True,add_generation_prompt=True)
+        return self.tokenizer.encode('\n'.join(x['role']+': '+x['content'] for x in messages)+'\nassistant:',
+                                     add_special_tokens=True)
+
+    def fits_context(self,messages):
+        ids=self._prompt_ids(messages)
+        return bool(ids) and len(ids)+self.max_new_tokens<=self.max_context
+
     def generate(self,messages,deterministic=False):
         import torch
         from transformers import GenerationConfig
-        if getattr(self.tokenizer,'chat_template',None):
-            ids=self.tokenizer.apply_chat_template(messages,tokenize=True,add_generation_prompt=True)
-        else:
-            ids=self.tokenizer.encode('\n'.join(x['role']+': '+x['content'] for x in messages)+'\nassistant:',
-                                      add_special_tokens=True)
+        ids=self._prompt_ids(messages)
         if not ids or len(ids)+self.max_new_tokens>self.max_context:
             raise ValueError('Editor context budget exceeded; evidence is not silently truncated')
         device=next(self.model.parameters()).device

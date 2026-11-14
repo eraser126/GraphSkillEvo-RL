@@ -14,11 +14,11 @@ import socket
 import subprocess
 from tempfile import TemporaryDirectory
 import time
-from zipfile import is_zipfile
+from zipfile import BadZipFile, ZipFile
 
 from graphskillevo.editor.accounting import Ledger, write_json
 from graphskillevo.editor.evidence import Trace
-from graphskillevo.editor.schema import render_worker, validate_graph
+from graphskillevo.editor.schema import fingerprint, render_worker, validate_graph
 from graphskillevo.editor.spreadsheet import SpreadsheetEvidenceSession
 from graphskillevo.editor.verification import CheckEngine
 
@@ -138,7 +138,8 @@ def main():
     root = args.out_root.resolve()
     root.mkdir(parents=True,exist_ok=False)
     write_json(root/'protocol.json',{'splits':splits,'pilot':[r['id'] for r in pilot],
-                                    'split_seed':42,'grouped_by':'reference workbook','max_turns':30})
+                                    'split_seed':42,'grouped_by':'reference workbook','max_turns':30,
+                                    'initial_graph_hash':fingerprint(graph)})
     ledger = Ledger(root,max_calls=10000,max_tokens=None)
     run_tasks(vendor,dataset,graph,ledger,pilot,root,stage='spreadsheet_v2_baseline')
 
@@ -183,46 +184,52 @@ def execute_task(dataset, graph, system, task, public, packages, result_dir,
     return session.finish(False).public(), raw['n_turns']
 
 
-def score_task(vendor, grader, dataset, graph, root, task, result_dir, record, tool_calls):
+def valid_workbook(path):
+    try:
+        with ZipFile(path) as archive:
+            return {'[Content_Types].xml', 'xl/workbook.xml'} <= set(archive.namelist()) and archive.testzip() is None
+    except (BadZipFile, OSError):
+        return False
+
+
+def score_task(vendor, grader, dataset, graph, root, task, result_dir, record, tool_calls, *, node_checks=True):
     tid = result_dir.name
     prediction = result_dir/f'{tid}_output.xlsx'
-    invalid_output = False
-    if (result_dir/'output.xlsx').is_file():
-        if not prediction.is_file():
-            shutil.copyfile(result_dir/'output.xlsx',prediction)
-        invalid_output = not is_zipfile(prediction)
-        # The official grader rejects broken XLSX archives. Recalculation would
-        # fail first and abort the batch before the grader can record the result.
-        if not invalid_output:
+    raw_output = result_dir/'output.xlsx'
+    invalid_output = raw_output.is_file() and not valid_workbook(raw_output)
+    if invalid_output:
+        score = dict(accuracy=0.0, modification_accuracy=0.0, regression_accuracy=0.0)
+        missing = False
+    else:
+        if raw_output.is_file():
+            shutil.copyfile(raw_output,prediction)
             before = prediction.stat().st_mtime_ns
             with recalculation_service(vendor,root) as recalc:
                 recalc.batch_open_files([str(prediction)])
             if prediction.stat().st_mtime_ns == before:
                 raise RuntimeError(f'LibreOffice did not recalculate {tid}')
-    score,missing = grader.process_single_item(task,str(dataset),str(result_dir),{},'Debugging')
-    if record is not None:
-        trace = Trace.create({**record, 'success': score['accuracy']==1})
-        write_json(result_dir/'editor_trace.json',trace.public())
+        score,missing = grader.process_single_item(task,str(dataset),str(result_dir),{},'Debugging')
+    trace = Trace.create({**record, 'success': score['accuracy']==1})
+    write_json(result_dir/'editor_trace.json',trace.public())
+    if node_checks:
         write_json(result_dir/'node_checks.json',CheckEngine().run(graph,[trace]))
     result = {'id':tid,'accuracy':score['accuracy'],'missing_output':missing,
               'modification_accuracy':score['modification_accuracy'],
               'regression_accuracy':score['regression_accuracy'],'tool_calls':tool_calls}
     if invalid_output:
-        result['output_error'] = 'invalid_xlsx_archive'
-        result['error_message'] = score['error_message']
+        result['invalid_output'] = True
     write_json(result_dir/'official_result.json',result)
     return result
 
 
 def run_tasks(vendor, dataset, graph, ledger, tasks, root, *, stage, max_turns=30,
-              exec_timeout=600, workers=1, base_config='configs/spreadsheetbench/default.yaml',
-              prior_results=()):
+              exec_timeout=600, workers=1, base_config='configs/spreadsheetbench/default.yaml', node_checks=True):
     """Run task tools in isolated processes and score completed waves serially."""
     if workers < 1:
         raise ValueError('At least one worker is required')
     grader = load_module(vendor/'evaluation/evaluation.py','spreadsheet_v2_official_eval')
     system = SYSTEM+'\n'+render_worker(graph)
-    results = list(prior_results)
+    results = []
     with TemporaryDirectory(prefix='ssb2-worker-') as tmp:
         public = Path(tmp)
         public.chmod(0o711)
@@ -263,9 +270,9 @@ def run_tasks(vendor, dataset, graph, ledger, tasks, root, *, stage, max_turns=3
                 for task, result_dir, future in pending:
                     record, tool_calls = future.result()
                     result = score_task(vendor, grader, dataset, graph, root, task,
-                                        result_dir, record, tool_calls)
+                                        result_dir, record, tool_calls, node_checks=node_checks)
                     results.append(result)
-                    write_json(root/'summary.json',{'completed':len(results),'planned':len(tasks)+len(prior_results),
+                    write_json(root/'summary.json',{'completed':len(results),'planned':len(tasks),
                                                     'passed':sum(r['accuracy']==1 for r in results),'results':results})
                     print(json.dumps(result),flush=True)
     return results

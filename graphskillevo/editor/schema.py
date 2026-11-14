@@ -214,6 +214,8 @@ def apply_patch(g, patch, phase):
             n['version'] += 1
         elif kind == 'update_node':
             p = op.get('payload')
+            if isinstance(p, dict) and 'checks' in p:
+                raise ContractError('update_node.payload.checks is invalid; use a check-stage operation')
             fields(p, {'name', 'purpose', 'instruction', 'evidence_expected'})
             if not p:
                 raise ContractError('Empty node update')
