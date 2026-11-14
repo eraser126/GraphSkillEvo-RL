@@ -1,0 +1,20 @@
+backend: spreadsheet
+base_config: configs/spreadsheetbench/default.yaml
+batch_size: 4
+group_size: 4
+training_epochs: 1
+# Maximum updates is independent of candidate count. Family-local remainder batches are kept.
+updates: 100
+dev_frequency: 5
+cost_weight: 0.0
+state_bank_size: 0
+max_new_tokens: 2048
+max_context: 16384
+device: cuda
+lora_rank: 8
+learning_rate: 0.000001
+exec_timeout: 600
+timeout: 600
+max_calls: 10000
+max_tokens: null  # Record token usage without a run-wide token stop.
+fixed_semantic_judge: false

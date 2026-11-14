@@ -1,0 +1,15 @@
+{
+  "state": "prepared_not_trained",
+  "base_commit": "722a8a913b05dc9d1b4078f0bec604cde4dc7529",
+  "branch": "feature/ppo-skill-search",
+  "python": "3.10.8",
+  "torch": "2.1.2+cu118",
+  "numpy": "1.26.4",
+  "pytest": "8.3.5",
+  "openai": "1.109.1",
+  "unit_tests": "....................                                                     [100%]\n20 passed in 8.30s",
+  "training_started": false,
+  "api_experiment_started": false,
+  "datasets_materialized": false,
+  "controller_checkpoints_created": false
+}

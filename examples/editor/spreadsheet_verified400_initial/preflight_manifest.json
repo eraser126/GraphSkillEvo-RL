@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "items": [
+    {
+      "unit_id": "spreadsheet_preflight_fixture",
+      "split": "explore",
+      "skill_ids": [
+        "spreadsheetbench_initial"
+      ],
+      "family_ids": [
+        "spreadsheet_initial"
+      ],
+      "benchmark": "synthetic_preflight_only",
+      "training_allowed": false,
+      "provenance": "Synthetic placeholder to validate configuration; contains no benchmark trajectories or labels.",
+      "graph": "initial_graph.json",
+      "support": [
+        {
+          "id": "synthetic_placeholder",
+          "payload": {
+            "fixture": true
+          }
+        }
+      ],
+      "reward": [],
+      "query": []
+    }
+  ]
+}

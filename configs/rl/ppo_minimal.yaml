@@ -1,0 +1,41 @@
+# Prepared configuration ONLY. No training/API calls run during installation.
+rl:
+  seed: 42
+  device: cpu
+  max_edits: 4
+  archive_capacity: 4
+  initialization_pool_size: 4
+  max_generator_calls_per_edit: 2
+  max_initialization_calls: 4
+  api_timeout: 120
+  include_hidden_reference: false
+  max_episode_tokens: 500000
+  max_run_tokens: 5000000
+  max_run_calls: 10000
+  reward:
+    gamma: 1.0
+    cost_unit: 1000000
+    cost_weight: 0.01
+    invalid_penalty: 0.01
+  features:
+    text_hash_dim: 256
+    max_text_chars: 20000
+  ppo:
+    learning_rate: 0.0003
+    hidden_sizes: [128, 128]
+    clip_range: 0.2
+    gae_lambda: 0.95
+    update_epochs: 4
+    minibatch_size: 16
+    entropy_coef: 0.01
+    value_coef: 0.5
+    max_grad_norm: 0.5
+  collection:
+    episodes_per_update: 8
+    updates: 4
+  evaluation:
+    train_probe_size: 15
+    reflection_failure_k: 5
+    dev_check_every_updates: 1
+    dev_episodes: 2
+    search_episodes: 1

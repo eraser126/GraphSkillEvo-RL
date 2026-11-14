@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "skill_id": "example_numeric_skill",
+  "version": 0,
+  "global_guidance": "Follow task requirements and keep input evidence. This is a synthetic contract fixture, not benchmark data.",
+  "nodes": [
+    {"node_id":"inspect","name":"Inspect data","purpose":"Read inputs","instruction":"Read values from the source.","evidence_expected":["output"],"checks":[{"check_id":"output_exists","applies_when":"always","target":"output","requirement":"Output is present","evidence_needed":["output"],"method":"rule","rule":{"kind":"nonempty","path":"/output"}}],"version":0},
+    {"node_id":"compute","name":"Compute result","purpose":"Perform computation","instruction":"Use the extracted values to compute the result.","evidence_expected":["output"],"checks":[],"version":0}
+  ],
+  "workflows":[{"workflow_id":"main","name":"Numeric workflow","use_when":"The task requires a numeric computation","nodes":["inspect","compute"]}]
+}

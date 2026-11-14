@@ -115,11 +115,17 @@ class EvolutionOperators:
         max_completion_tokens: int,
         reasoning_effort: str | None,
         graph_retry_attempts: int = 3,
+        max_initialization_calls: int | None = None,
+        api_retries: int = 3,
+        api_timeout: int | None = None,
     ) -> None:
         self.env_name = env_name
         self.max_completion_tokens = int(max_completion_tokens)
         self.reasoning_effort = reasoning_effort or None
         self.graph_retry_attempts = max(1, int(graph_retry_attempts))
+        self.max_initialization_calls = max_initialization_calls
+        self.api_retries = max(1, int(api_retries))
+        self.api_timeout = api_timeout
 
     def initialize_population(
         self,
@@ -143,6 +149,11 @@ class EvolutionOperators:
         last_usage: dict = {}
 
         while len(accepted) < n:
+            if self.max_initialization_calls is not None and len(attempts) >= self.max_initialization_calls:
+                raise GraphSkillGenerationError(
+                    'Initialization generation-call budget exhausted',
+                    parsed={'accepted_count': len(accepted), 'attempt_count': len(attempts)},
+                )
             requested = n - len(accepted)
             attempt_no = len(attempts) + 1
             user = self._build_init_user(
@@ -155,9 +166,10 @@ class EvolutionOperators:
                 system=system,
                 user=user,
                 max_completion_tokens=self.max_completion_tokens,
-                retries=3,
+                retries=self.api_retries,
                 stage="graphskillevo_graph_init_population",
                 reasoning_effort=self.reasoning_effort,
+                timeout=self.api_timeout,
             )
             parsed = extract_json(response)
             last_prompt = user
@@ -352,9 +364,10 @@ class EvolutionOperators:
             system=system,
             user=user,
             max_completion_tokens=self.max_completion_tokens,
-            retries=3,
+            retries=self.api_retries,
             stage=stage,
             reasoning_effort=self.reasoning_effort,
+            timeout=self.api_timeout,
         )
         parsed = extract_json(response)
         if not isinstance(parsed, dict) or not str(parsed.get("new_skill", "")).strip():

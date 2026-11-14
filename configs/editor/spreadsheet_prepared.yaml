@@ -1,0 +1,8 @@
+# Offline preflight remains the run_editor default. No models or credentials here.
+backend: spreadsheet
+base_config: configs/spreadsheetbench/default.yaml
+fixed_semantic_judge: false
+device: cpu
+timeout: 600
+max_calls: 100
+max_tokens: 1000000

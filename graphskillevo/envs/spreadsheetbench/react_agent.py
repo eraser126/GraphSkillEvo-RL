@@ -250,7 +250,7 @@ def _auto_verify(work_dir: str) -> str:
 
 # ── Bash execution ────────────────────────────────────────────────────────────
 
-def _run_bash(cmd: str, work_dir: str, timeout: int = 60) -> str:
+def _run_bash(cmd: str, work_dir: str, timeout: int = 60, auto_verify: bool = True) -> str:
     try:
         proc = subprocess.run(
             cmd,
@@ -269,7 +269,7 @@ def _run_bash(cmd: str, work_dir: str, timeout: int = 60) -> str:
         out = out[:3800] + f"\n...[truncated, {len(out)} total chars]"
     result = out or "(no output)"
 
-    if "solution.py" in cmd and "python" in cmd.lower():
+    if auto_verify and "solution.py" in cmd and "python" in cmd.lower():
         result += _auto_verify(work_dir)
 
     return result
@@ -289,7 +289,25 @@ def _react_loop(
     work_dir: str,
     max_turns: int,
     max_output_tokens: int,
+    evidence_session=None,
+    exec_timeout=600,
+    tool_runner=None,
 ) -> dict:
+    tools = [BASH_TOOL_CHAT, WRITE_FILE_TOOL_CHAT]
+    if evidence_session is not None:
+        tools = tools + [
+            {'type': 'function', 'function': {'name': 'node_checkpoint',
+             'description': 'Record an actual coarse node start/end/skip. End captures current files; no retry or grading.',
+             'parameters': {'type': 'object', 'properties': {'node_id': {'type': 'string'},
+                            'phase': {'type': 'string', 'enum': ['start', 'end', 'skip']}},
+                            'required': ['node_id', 'phase']}}},
+            {'type': 'function', 'function': {'name': 'execute_solution',
+             'description': 'Execute solution.py once. Records actual exit code. No automatic retry.',
+             'parameters': {'type': 'object', 'properties': {}}}},
+        ]
+        system += ('\nUse node_checkpoint to record actual node boundaries with the stable IDs in the skill. '
+                   'Use execute_solution for an observed execution receipt. Text markers alone cannot '
+                   'capture file evidence. Checkpoints do not constrain workflow or return correctness feedback.')
     messages: list[dict] = [
         {"role": "system", "content": system},
         {"role": "user", "content": user},
@@ -300,17 +318,20 @@ def _react_loop(
     for _ in range(max_turns):
         message, _ = chat_target_messages(
             messages=messages,
-            tools=[BASH_TOOL_CHAT, WRITE_FILE_TOOL_CHAT],
+            tools=tools,
             tool_choice="auto",
             max_completion_tokens=max_output_tokens,
             retries=5,
             stage="rollout",
             return_message=True,
+            timeout=exec_timeout,
         )
 
         assistant_text = str(getattr(message, "content", "") or "")
         tool_calls = _assistant_tool_calls(message)
         assistant_payload: dict = {"role": "assistant", "content": assistant_text}
+        if getattr(message,'responses_output',None):
+            assistant_payload['_responses_output']=message.responses_output
         if tool_calls:
             assistant_payload["tool_calls"] = tool_calls
         messages.append(assistant_payload)
@@ -327,21 +348,51 @@ def _react_loop(
             except json.JSONDecodeError:
                 args = {}
 
-            if function.get("name") == "write_file":
-                obs = _write_file(
-                    args.get("path", ""),
-                    args.get("content", ""),
-                    work_dir,
-                )
+            if evidence_session is not None and function.get('name') == 'node_checkpoint':
+                from graphskillevo.editor.schema import ContractError
+                try:
+                    obs = evidence_session.checkpoint(args.get('node_id'), args.get('phase'))
+                except ContractError as exc:
+                    obs = 'Checkpoint not recorded: '+str(exc)
+                conversation.append({'type': 'tool_call', 'cmd': '[node_checkpoint] '+json.dumps(args), 'obs': obs})
+            elif evidence_session is not None and function.get('name') == 'execute_solution':
+                import sys
+                argv = [sys.executable, 'solution.py']
+                try:
+                    if tool_runner is None:
+                        process = subprocess.run(argv, cwd=work_dir, capture_output=True, text=True, timeout=exec_timeout)
+                    else:
+                        process = tool_runner.run(['python', 'solution.py'], timeout=exec_timeout)
+                    evidence_session.process_observed(argv, process.returncode, stdout=process.stdout, stderr=process.stderr)
+                    obs = f'exit_code={process.returncode}\n'+(process.stdout+process.stderr)[:4000]
+                except subprocess.TimeoutExpired:
+                    evidence_session.process_observed(argv, timed_out=True)
+                    obs = f'Execution timeout after {exec_timeout} seconds'
+                conversation.append({'type': 'tool_call', 'cmd': '[execute_solution]', 'obs': obs})
+            elif function.get("name") == "write_file":
+                path, content = args.get('path', ''), args.get('content', '')
+                obs = (_write_file(path, content, work_dir) if tool_runner is None
+                       else tool_runner.write_file(path, content))
                 conversation.append({
                     "type": "tool_call",
                     "cmd": f"[write_file] {args.get('path', '')}",
                     "obs": obs,
                 })
+                if evidence_session is not None:
+                    evidence_session.observe('write_file '+args.get('path',''),
+                                             obs+'\nSOURCE\n'+args.get('content',''),writes=[args.get('path','')])
             else:
                 cmd = args.get("cmd", "")
-                obs = _run_bash(cmd, work_dir)
+                if tool_runner is None:
+                    obs = _run_bash(cmd, work_dir, timeout=exec_timeout, auto_verify=evidence_session is None)
+                else:
+                    try:
+                        process = tool_runner.run(['/bin/bash', '-c', cmd], timeout=exec_timeout)
+                        obs = f'exit_code={process.returncode}\n'+(process.stdout+process.stderr)[:4000]
+                    except subprocess.TimeoutExpired:
+                        obs = f'[timeout after {exec_timeout}s]'
                 conversation.append({"type": "tool_call", "cmd": cmd, "obs": obs})
+                if evidence_session is not None:evidence_session.observe(cmd,obs)
 
             messages.append(
                 {
@@ -369,6 +420,8 @@ def run_react(
     diagnostic_mode: bool = False,
     diagnostic_instruction: str = "",
     diagnostic_trace_context: str = "",
+    evidence_session=None,
+    exec_timeout=600,
 ) -> dict:
     """Run the ReAct agent for one task.
 
@@ -389,7 +442,8 @@ def run_react(
         diagnostic_instruction=diagnostic_instruction,
         diagnostic_trace_context=diagnostic_trace_context,
     )
-    result = _react_loop(system, user, work_dir, max_turns, max_output_tokens)
+    result = _react_loop(system, user, work_dir, max_turns, max_output_tokens,
+                         evidence_session=evidence_session,exec_timeout=exec_timeout)
     result["target_system_prompt"] = system
     result["target_user_prompt"] = user
     return result

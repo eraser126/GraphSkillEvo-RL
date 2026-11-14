@@ -1,0 +1,50 @@
+{
+  "source": "graphskillevo/initial_skills/spreadsheetbench/init_skill.md",
+  "source_sha256": "8229fedeee7abaf003b68036ec9b45daa01fd6af2566134503ee8055d15e3a11",
+  "nodes": 6,
+  "workflows": [
+    {
+      "workflow_id": "w_0",
+      "name": "General task",
+      "use_when": "Manipulate an `.xlsx` spreadsheet using Python and save the result to `OUTPUT_PATH`",
+      "nodes": [
+        "n_cd272bc98375",
+        "n_e656c84b04cf",
+        "n_934fa4a006f8",
+        "n_7f636116d9b4",
+        "n_e3a67d9540e9",
+        "n_eebdd24a77d9"
+      ]
+    }
+  ],
+  "source_kind": "upstream_initial",
+  "node_mapping": [
+    {
+      "node_id": "n_cd272bc98375",
+      "name": "Explore Input File"
+    },
+    {
+      "node_id": "n_e656c84b04cf",
+      "name": "Select Library"
+    },
+    {
+      "node_id": "n_934fa4a006f8",
+      "name": "Write `solution.py`"
+    },
+    {
+      "node_id": "n_7f636116d9b4",
+      "name": "Save Output"
+    },
+    {
+      "node_id": "n_e3a67d9540e9",
+      "name": "Execute"
+    },
+    {
+      "node_id": "n_eebdd24a77d9",
+      "name": "Confirm"
+    }
+  ],
+  "training_started": false,
+  "model_calls": 0,
+  "benchmark_runs": 0
+}

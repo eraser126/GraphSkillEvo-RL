@@ -15,23 +15,32 @@ from graphskillevo.model import (
 
 
 def configure_models(cfg: dict) -> None:
+    from graphskillevo.model.gateway import load_gateway
+    gateway=load_gateway()
+    if gateway:
+        # Public settings may be logged. Secret is passed only to the client setup below.
+        cfg.update(model_backend='openai_chat',target_backend='openai_chat',optimizer_backend='openai_chat',
+                   target_model=gateway['model'],optimizer_model=gateway['model'],
+                   azure_openai_endpoint=gateway['base_url'],azure_openai_auth_mode='openai_compatible',
+                   target_azure_openai_endpoint=gateway['base_url'],target_azure_openai_auth_mode='openai_compatible',
+                   optimizer_azure_openai_endpoint=gateway['base_url'],optimizer_azure_openai_auth_mode='openai_compatible')
     backend = cfg.get("model_backend", "azure_openai")
     configure_azure_openai(
         endpoint=cfg.get("azure_openai_endpoint") or cfg.get("azure_endpoint") or None,
         api_version=cfg.get("azure_openai_api_version") or cfg.get("azure_api_version") or None,
-        api_key=cfg.get("azure_openai_api_key") or cfg.get("azure_api_key") or None,
+        api_key=gateway['api_key'] if gateway else cfg.get("azure_openai_api_key") or cfg.get("azure_api_key") or None,
         auth_mode=cfg.get("azure_openai_auth_mode") or None,
         ad_scope=cfg.get("azure_openai_ad_scope") or None,
         managed_identity_client_id=cfg.get("azure_openai_managed_identity_client_id") or None,
         optimizer_endpoint=cfg.get("optimizer_azure_openai_endpoint") or None,
         optimizer_api_version=cfg.get("optimizer_azure_openai_api_version") or None,
-        optimizer_api_key=cfg.get("optimizer_azure_openai_api_key") or None,
+        optimizer_api_key=gateway['api_key'] if gateway else cfg.get("optimizer_azure_openai_api_key") or None,
         optimizer_auth_mode=cfg.get("optimizer_azure_openai_auth_mode") or None,
         optimizer_ad_scope=cfg.get("optimizer_azure_openai_ad_scope") or None,
         optimizer_managed_identity_client_id=cfg.get("optimizer_azure_openai_managed_identity_client_id") or None,
         target_endpoint=cfg.get("target_azure_openai_endpoint") or None,
         target_api_version=cfg.get("target_azure_openai_api_version") or None,
-        target_api_key=cfg.get("target_azure_openai_api_key") or None,
+        target_api_key=gateway['api_key'] if gateway else cfg.get("target_azure_openai_api_key") or None,
         target_auth_mode=cfg.get("target_azure_openai_auth_mode") or None,
         target_ad_scope=cfg.get("target_azure_openai_ad_scope") or None,
         target_managed_identity_client_id=cfg.get("target_azure_openai_managed_identity_client_id") or None,

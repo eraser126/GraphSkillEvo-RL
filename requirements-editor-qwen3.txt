@@ -1,0 +1,7 @@
+# Install into an isolated environment; preserve the legacy 4.44 environment.
+# A compatible PyTorch build must be prepared separately for the actual CUDA host.
+transformers==4.51.3
+tokenizers==0.21.4
+accelerate==1.6.0
+peft==0.15.2
+safetensors==0.5.3

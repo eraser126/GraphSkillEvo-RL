@@ -196,3 +196,14 @@ corresponding paper:
       url={https://arxiv.org/abs/2609.21749}, 
 }
 ```
+
+
+## Evidence-grounded LLM editor preparation
+
+The independent `python -m graphskillevo.run_editor` entry implements the 2026-11-02 design: post-hoc node checks, two-turn LLM editing and completion-token GRPO. The original EA and earlier operator-selection PPO entries remain available. See [preparation and integration limits](docs/EDITOR_PREPARATION.md).
+
+Offline preflight (no models, APIs or training):
+
+```bash
+python -m graphskillevo.run_editor --config configs/editor/minimal.yaml --manifest examples/editor/manifest.json
+```

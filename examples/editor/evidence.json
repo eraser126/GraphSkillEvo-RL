@@ -1,0 +1,44 @@
+[
+  {
+    "task_id": "support_fixture",
+    "events": [
+      {
+        "index": 0,
+        "kind": "node_start",
+        "node_ids": [
+          "inspect"
+        ],
+        "action": "",
+        "observation": "",
+        "reads": [],
+        "writes": []
+      },
+      {
+        "index": 1,
+        "kind": "node_end",
+        "node_ids": [
+          "inspect"
+        ],
+        "action": "",
+        "observation": "extracted",
+        "reads": [],
+        "writes": []
+      }
+    ],
+    "snapshots": [
+      {
+        "snapshot_id": "s_inspect_1_fc500e77ea3e",
+        "at_event": 1,
+        "node_id": "inspect",
+        "values": {
+          "output": {
+            "value": 10,
+            "unit": ""
+          }
+        },
+        "sha256": "fc500e77ea3eef581cf045a2e64842608c145416b35c1547f07eaf4af5579e3a"
+      }
+    ],
+    "success": false
+  }
+]

@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "skill_id": "spreadsheetbench_v2_debugging",
+  "version": 0,
+  "global_guidance": "- Audit the supplied workbook against the user's requested scope. Read `INPUT_PATH` and save the repaired workbook to `OUTPUT_PATH`.\n- Use `openpyxl` to inspect and edit the workbook. Preserve sheet layout, existing formulas, and formatting outside the intended repair. A cached value is an observation about a prior calculation, not a substitute for reading the formula.\n- Select a workflow by the requested scope. When checkpoint tooling is available, record each node after completing its work and cite the relevant sheet names, cell addresses, or tool observations.",
+  "nodes": [
+    {
+      "node_id": "n_acc6d1f50d24",
+      "name": "Map Workbook and Scope",
+      "purpose": "Map Workbook and Scope",
+      "instruction": "- List the worksheets and identify their roles from headers, labels, and formula references. Record the repair scope and any explicit instructions about what must stay unchanged.",
+      "evidence_expected": [
+        "input"
+      ],
+      "checks": [
+        {
+          "check_id": "n_acc6d1f50d24_readable",
+          "applies_when": "always",
+          "target": "input",
+          "requirement": "Check readable using captured input at node end",
+          "evidence_needed": [
+            "input"
+          ],
+          "method": "rule",
+          "rule": {
+            "kind": "spreadsheet",
+            "path": "/input",
+            "value": {
+              "check": "readable"
+            }
+          }
+        }
+      ],
+      "version": 0
+    },
+    {
+      "node_id": "n_5f87b948f013",
+      "name": "Trace Formula Anomalies",
+      "purpose": "Trace Formula Anomalies",
+      "instruction": "- Compare suspicious formulas with nearby equivalent formulas and follow upstream references across sheets. Check ranges, anchors, lookup keys, signs, units, and duplicate inputs where relevant. Separate likely causes from downstream symptoms.",
+      "evidence_expected": [],
+      "checks": [],
+      "version": 0
+    },
+    {
+      "node_id": "n_5d7a3e7c66c3",
+      "name": "Compare Formatting Conventions",
+      "purpose": "Compare Formatting Conventions",
+      "instruction": "- Compare analogous inputs and formulas within the same workbook. Use nearby cells serving the same role to infer the intended style. Record the inconsistent style property and the cells that support the inference.",
+      "evidence_expected": [],
+      "checks": [],
+      "version": 0
+    },
+    {
+      "node_id": "n_be443dfa828f",
+      "name": "Plan Minimal Repairs",
+      "purpose": "Plan Minimal Repairs",
+      "instruction": "- List the intended edits and the evidence supporting each. Consider which downstream outputs may legitimately change. Leave uncertain or unrelated cells untouched. Keep cell contents intact for style-only changes.",
+      "evidence_expected": [],
+      "checks": [],
+      "version": 0
+    },
+    {
+      "node_id": "n_968401b392e0",
+      "name": "Write Repair Script",
+      "purpose": "Write Repair Script",
+      "instruction": "- Write `solution.py` using `INPUT_PATH` and `OUTPUT_PATH`. Apply only the planned edits to a loaded workbook, then save to `OUTPUT_PATH`. Use a narrow style edit when a full style copy would change unrelated properties.",
+      "evidence_expected": [
+        "script"
+      ],
+      "checks": [
+        {
+          "check_id": "n_968401b392e0_syntax",
+          "applies_when": "always",
+          "target": "script",
+          "requirement": "Check syntax using captured script at node end",
+          "evidence_needed": [
+            "script"
+          ],
+          "method": "rule",
+          "rule": {
+            "kind": "spreadsheet",
+            "path": "/script",
+            "value": {
+              "check": "syntax"
+            }
+          }
+        },
+        {
+          "check_id": "n_968401b392e0_paths_defined",
+          "applies_when": "always",
+          "target": "script",
+          "requirement": "Check paths_defined using captured script at node end",
+          "evidence_needed": [
+            "script"
+          ],
+          "method": "rule",
+          "rule": {
+            "kind": "spreadsheet",
+            "path": "/script",
+            "value": {
+              "check": "paths_defined"
+            }
+          }
+        },
+        {
+          "check_id": "n_968401b392e0_library_policy",
+          "applies_when": "always",
+          "target": "script",
+          "requirement": "Check library_policy using captured script at node end",
+          "evidence_needed": [
+            "script"
+          ],
+          "method": "rule",
+          "rule": {
+            "kind": "spreadsheet",
+            "path": "/script",
+            "value": {
+              "check": "library_policy"
+            }
+          }
+        }
+      ],
+      "version": 0
+    },
+    {
+      "node_id": "n_5a4465aab222",
+      "name": "Execute and Inspect Output",
+      "purpose": "Execute and Inspect Output",
+      "instruction": "- Run `solution.py`, check its exit status, and reopen the output workbook. Inspect the edited cells and a sample of affected downstream formulas. If a recalculation tool is available and the repair affects computed values, recalculate the output before checking them.",
+      "evidence_expected": [
+        "execution",
+        "output"
+      ],
+      "checks": [
+        {
+          "check_id": "n_5a4465aab222_execution_success",
+          "applies_when": "always",
+          "target": "execution",
+          "requirement": "Check execution_success using captured execution at node end",
+          "evidence_needed": [
+            "execution"
+          ],
+          "method": "rule",
+          "rule": {
+            "kind": "spreadsheet",
+            "path": "/execution",
+            "value": {
+              "check": "execution_success"
+            }
+          }
+        },
+        {
+          "check_id": "n_5a4465aab222_exists",
+          "applies_when": "always",
+          "target": "output",
+          "requirement": "Check exists using captured output at node end",
+          "evidence_needed": [
+            "output"
+          ],
+          "method": "rule",
+          "rule": {
+            "kind": "spreadsheet",
+            "path": "/output",
+            "value": {
+              "check": "exists"
+            }
+          }
+        }
+      ],
+      "version": 0
+    },
+    {
+      "node_id": "n_7248ec04e627",
+      "name": "Verify Repair and Scope",
+      "purpose": "Verify Repair and Scope",
+      "instruction": "- Compare input and output to confirm the intended cell or style changes. Check the original anomaly, relevant downstream effects, and representative cells that should stay unchanged. Revisit diagnosis or implementation if these checks fail. Submit the verified output workbook.",
+      "evidence_expected": [
+        "output"
+      ],
+      "checks": [
+        {
+          "check_id": "n_7248ec04e627_readable",
+          "applies_when": "always",
+          "target": "output",
+          "requirement": "Check readable using captured output at node end",
+          "evidence_needed": [
+            "output"
+          ],
+          "method": "rule",
+          "rule": {
+            "kind": "spreadsheet",
+            "path": "/output",
+            "value": {
+              "check": "readable"
+            }
+          }
+        }
+      ],
+      "version": 0
+    }
+  ],
+  "workflows": [
+    {
+      "workflow_id": "w_0",
+      "name": "Formula and Reference Debugging",
+      "use_when": "The task asks for an audit, calculation repair, formula repair, or reference correction.",
+      "nodes": [
+        "n_acc6d1f50d24",
+        "n_5f87b948f013",
+        "n_be443dfa828f",
+        "n_968401b392e0",
+        "n_5a4465aab222",
+        "n_7248ec04e627"
+      ]
+    },
+    {
+      "workflow_id": "w_1",
+      "name": "Formatting Consistency Repair",
+      "use_when": "The task specifically asks to fix formatting or color conventions.",
+      "nodes": [
+        "n_acc6d1f50d24",
+        "n_5d7a3e7c66c3",
+        "n_be443dfa828f",
+        "n_968401b392e0",
+        "n_5a4465aab222",
+        "n_7248ec04e627"
+      ]
+    },
+    {
+      "workflow_id": "w_2",
+      "name": "Combined Audit",
+      "use_when": "The task explicitly asks to review both calculation logic and formatting.",
+      "nodes": [
+        "n_acc6d1f50d24",
+        "n_5f87b948f013",
+        "n_5d7a3e7c66c3",
+        "n_be443dfa828f",
+        "n_968401b392e0",
+        "n_5a4465aab222",
+        "n_7248ec04e627"
+      ]
+    }
+  ]
+}

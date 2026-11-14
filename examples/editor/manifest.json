@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "items": [{
+    "unit_id":"contract_fixture",
+    "split":"explore",
+    "skill_ids":["example_numeric_skill"],
+    "family_ids":["synthetic_contract_family"],
+    "benchmark":"synthetic_offline_contract_only",
+    "training_allowed":false,
+    "provenance":"Handwritten schema fixture. No real benchmark task, no performance evidence.",
+    "graph":"graph.json",
+    "support":[{"id":"support_fixture","payload":{"fixture":"support"}}],
+    "reward":[{"id":"reward_fixture","payload":{"fixture":"reward"}}],
+    "query":[{"id":"query_fixture","payload":{"fixture":"query"}}]
+  }]
+}

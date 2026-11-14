@@ -1,0 +1,61 @@
+{
+  "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+  "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+  "local_path": "/root/autodl-tmp/models/Qwen3-4B-Instruct-2507",
+  "training_environment": "/root/autodl-tmp/envs/editor-qwen3",
+  "minimum_transformers": "4.51.0",
+  "files": {
+    ".gitattributes": {
+      "size": 1570,
+      "sha256": null
+    },
+    "LICENSE": {
+      "size": 11343,
+      "sha256": null
+    },
+    "README.md": {
+      "size": 8168,
+      "sha256": null
+    },
+    "config.json": {
+      "size": 727,
+      "sha256": null
+    },
+    "generation_config.json": {
+      "size": 238,
+      "sha256": null
+    },
+    "merges.txt": {
+      "size": 1671839,
+      "sha256": null
+    },
+    "model-00001-of-00003.safetensors": {
+      "size": 3957900840,
+      "sha256": "75311d91bb08cf0b882913da464a1e722a31fb44db35208663487efb7a3d8ed6"
+    },
+    "model-00002-of-00003.safetensors": {
+      "size": 3987450520,
+      "sha256": "0b48adbb1f60e901153d91907ba11ce63bd4b8b584482e730f48808d055dfba1"
+    },
+    "model-00003-of-00003.safetensors": {
+      "size": 99630640,
+      "sha256": "7dd39ccca5e4de123c74c14af44c9bf2eb75df33b4614382af0134528e060d5d"
+    },
+    "model.safetensors.index.json": {
+      "size": 32819,
+      "sha256": null
+    },
+    "tokenizer.json": {
+      "size": 11422654,
+      "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
+    },
+    "tokenizer_config.json": {
+      "size": 9377,
+      "sha256": null
+    },
+    "vocab.json": {
+      "size": 2776833,
+      "sha256": null
+    }
+  }
+}

@@ -110,6 +110,7 @@ _AZ_CLI_TOKEN_CACHE: dict[str, dict[str, Any]] = {}
 
 # Deployments that require Responses API
 _RESPONSES_API_MODELS = {
+    "gpt-6.1-sol",
     "gpt-5.3-codex", "gpt-5.1-codex", "gpt-5.2-codex",
     "gpt-5-codex", "codex-mini", "gpt-5.4-pro", "gpt-5.5",
 }
@@ -546,6 +547,9 @@ def _messages_to_responses_input(messages: list[dict[str, Any]]) -> tuple[list[d
             })
             continue
         if role == "assistant":
+            if message.get('_responses_output'):
+                input_items.extend(message['_responses_output'])
+                continue
             if content:
                 input_items.append({"role": "assistant", "content": str(content)})
             for tool_call in message.get("tool_calls") or []:
@@ -558,7 +562,19 @@ def _messages_to_responses_input(messages: list[dict[str, Any]]) -> tuple[list[d
                 })
             continue
         if role in {"user", "developer"}:
-            input_items.append({"role": "user", "content": str(content)})
+            if isinstance(content,list):
+                converted=[]
+                for part in content:
+                    if part.get('type')=='text':converted.append(dict(type='input_text',text=part.get('text','')))
+                    elif part.get('type')=='image_url':
+                        source=part['image_url']
+                        image=dict(type='input_image',image_url=source['url'] if isinstance(source,dict) else source)
+                        if isinstance(source,dict) and source.get('detail'):image['detail']=source['detail']
+                        converted.append(image)
+                    else:converted.append(part)
+                content=converted
+            else:content=str(content)
+            input_items.append({"role": role, "content": content})
     return input_items, "\n\n".join(instructions)
 
 
@@ -582,7 +598,8 @@ def _responses_to_chat_message(resp: Any) -> tuple[Any, str]:
             for part in content_parts:
                 if getattr(part, "type", "") == "output_text":
                     text += getattr(part, "text", "") or ""
-    return SimpleNamespace(content=text, tool_calls=tool_calls), text
+    replay=[item.model_dump(exclude_none=True) for item in (getattr(resp,'output',None) or []) if hasattr(item,'model_dump')]
+    return SimpleNamespace(content=text, tool_calls=tool_calls,responses_output=replay), text
 
 
 # ── Public API ────────────────────────────────────────────────────────────────

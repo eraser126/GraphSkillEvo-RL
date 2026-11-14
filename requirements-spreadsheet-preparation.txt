@@ -1,0 +1,5 @@
+# Evaluation/runtime subset; leave the existing model/training stack untouched.
+openpyxl==3.1.5
+numpy==1.26.4
+pandas==2.2.3
+tqdm==4.67.1

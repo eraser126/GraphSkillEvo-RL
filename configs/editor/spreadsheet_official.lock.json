@@ -1,0 +1,11 @@
+{
+  "commit": "49b73a94775fb489063f60ca1865e3a650079a79",
+  "files": {
+    "evaluation/evaluation.py": "4ae77cee8df01d1f34684fceab972810d696886533d33be2e89373de6b4d3de3",
+    "evaluation/open_spreadsheet.py": "8eafeb70aee06eaefc995ddc0b10747a713792ce15a122cdcd406d90b30ef9b8",
+    "README.md": "ba96370b14fa897a61d7a68f3ada6399391d0a4f5d4a8bb9be2a1a38a4316143",
+    "requirements.txt": "bb3cd66a19bf9d1b9b8ffd50eea2e7c81c4a9063e3d94c76e5554632226777d5"
+  },
+  "source": "https://github.com/RUCKBReasoning/SpreadsheetBench",
+  "scope": "Unmodified official evaluation source snapshot; not full clone"
+}

@@ -1,0 +1,7 @@
+# Optional training stack. No weights downloaded and no training on installation.
+# Pin an older, torch-2.1-compatible baseline; new model architectures may require a separate upgraded environment.
+transformers==4.44.2
+tokenizers==0.19.1
+accelerate==0.34.2
+peft==0.13.2
+safetensors==0.4.5

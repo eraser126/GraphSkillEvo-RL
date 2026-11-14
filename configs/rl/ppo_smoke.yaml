@@ -1,0 +1,14 @@
+# Future opt-in smoke configuration. Not launched by setup or tests.
+rl:
+  max_edits: 2
+  archive_capacity: 2
+  initialization_pool_size: 1
+  max_generator_calls_per_edit: 1
+  episodes_per_update: 2
+  updates: 1
+  train_probe_size: 3
+  reflection_failure_k: 1
+  dev_episodes: 1
+  max_run_tokens: 200000
+  max_episode_tokens: 100000
+  max_run_calls: 300

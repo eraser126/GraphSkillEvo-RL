@@ -1,0 +1,6 @@
+# RTX 4090 / Linux / Python 3.10 runtime validated by check_editor_memory.py.
+# Install in the isolated editor environment, not the benchmark system Python.
+# The standard Linux torch 2.5.1 distribution supplies its CUDA runtime.
+-r requirements-editor-qwen3.txt
+torch==2.5.1
+torchvision==0.20.1

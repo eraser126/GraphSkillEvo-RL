@@ -1,0 +1,4 @@
+[
+  {"base_version":0,"operations":[{"op":"add_check","node_id":"inspect","payload":{"check_id":"unit_present","applies_when":"always","target":"output/unit","requirement":"Retain the input unit for downstream computation","evidence_needed":["output"],"method":"rule","rule":{"kind":"nonempty","path":"/output/unit"}}}],"evidence_ids":[],"rationale":"Check whether the source unit was retained."},
+  {"base_version":1,"operations":[{"op":"update_node","node_id":"inspect","payload":{"instruction":"Read source values and preserve their units. Normalize incompatible units before calculation."}}],"evidence_ids":[],"rationale":"Use the failed unit check to improve upstream input guidance."}
+]
